@@ -72,6 +72,8 @@ static pool_mgr_pt *pool_store = NULL; // an array of pointers, only expand
 static unsigned pool_store_size = 0;
 static unsigned pool_store_capacity = 0;
 
+static bool call_flag = 1;
+static size_t call_count = 0;
 
 
 /********************************************/
@@ -82,14 +84,12 @@ static unsigned pool_store_capacity = 0;
 static alloc_status _mem_resize_pool_store();
 static alloc_status _mem_resize_node_heap(pool_mgr_pt pool_mgr);
 static alloc_status _mem_resize_gap_ix(pool_mgr_pt pool_mgr);
-static alloc_status
-        _mem_add_to_gap_ix(pool_mgr_pt pool_mgr,
-                           size_t size,
-                           node_pt node);
-static alloc_status
-        _mem_remove_from_gap_ix(pool_mgr_pt pool_mgr,
-                                size_t size,
-                                node_pt node);
+static alloc_status  mem_add_to_gap_ix(pool_mgr_pt pool_mgr,
+                                       size_t size, node_pt node);
+
+static alloc_status mem_remove_from_gap_ix(pool_mgr_pt pool_mgr,
+                                           size_t size, node_pt node);
+
 static alloc_status _mem_sort_gap_ix(pool_mgr_pt pool_mgr);
 static alloc_status _mem_invalidate_gap_ix(pool_mgr_pt pool_mgr);
 
@@ -102,32 +102,62 @@ static alloc_status _mem_invalidate_gap_ix(pool_mgr_pt pool_mgr);
 /****************************************/
 alloc_status mem_init() {
     // ensure that it's called only once until mem_free
+    if (!(assert(call_flag)))
+    {
+      return ALLOC_CALLED_AGAIN;
+    }
     // allocate the pool store with initial capacity
     // note: holds pointers only, other functions to allocate/deallocate
+    *pool_store = calloc(MEM_POOL_STORE_INIT_CAPACITY);
+    pool_store_size += 1;
+    pool_store_capacity = MEM_POOL_STORE_INIT_CAPACITY;
 
-    return ALLOC_FAIL;
+
+    call_flag = 0; // Using this to ensure its only called once - set to false
+    call_count += 1; // for count of mem_init calls
+
+    return ALLOC_OK;
 }
 
 alloc_status mem_free() {
     // ensure that it's called only once for each mem_init
+    if (!(assert(call_count)))
+    {
+      return ALLOC_CALLED_AGAIN;
+    }
+
     // make sure all pool managers have been deallocated
+
     // can free the pool store array
+    free(*pool_store);
+
     // update static variables
+
+
+    call_flag = 1;  // since mem_free is called we can set this to true again
+    call_count -= 1; // decrement mem_init calls
 
     return ALLOC_FAIL;
 }
 
 pool_pt mem_pool_open(size_t size, alloc_policy policy) {
     // make sure there the pool store is allocated
+    assert(call_flag);
+
     // expand the pool store, if necessary
     // allocate a new mem pool mgr
     // check success, on error return null
+
     // allocate a new memory pool
     // check success, on error deallocate mgr and return null
+
+
     // allocate a new node heap
     // check success, on error deallocate mgr/pool and return null
+
     // allocate a new gap index
     // check success, on error deallocate mgr/pool/heap and return null
+
     // assign all the pointers and update meta data:
     //   initialize top node of node heap
     //   initialize top node of gap index
@@ -318,4 +348,3 @@ static alloc_status _mem_sort_gap_ix(pool_mgr_pt pool_mgr) {
 static alloc_status _mem_invalidate_gap_ix(pool_mgr_pt pool_mgr) {
     return ALLOC_FAIL;
 }
-

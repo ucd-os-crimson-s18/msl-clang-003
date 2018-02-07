@@ -52,4 +52,5 @@ mem_del_alloc(pool_pt pool, void *alloc);
 
 void
 mem_inspect_pool(pool_pt pool, pool_segment_pt *segments, unsigned *num_segments);
+
 #endif //C_MEM_POOL_H
