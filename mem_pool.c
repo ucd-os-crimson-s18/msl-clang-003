@@ -72,9 +72,6 @@ static pool_mgr_pt *pool_store = NULL; // an array of pointers, only expand
 static unsigned pool_store_size = 0;
 static unsigned pool_store_capacity = 0;
 
-static size_t call_flag = 0;
-static size_t call_count = 0;
-
 
 /********************************************/
 /*                                          */
@@ -86,10 +83,8 @@ static alloc_status _mem_resize_node_heap(pool_mgr_pt pool_mgr);
 static alloc_status _mem_resize_gap_ix(pool_mgr_pt pool_mgr);
 static alloc_status  mem_add_to_gap_ix(pool_mgr_pt pool_mgr,
                                        size_t size, node_pt node);
-
 static alloc_status mem_remove_from_gap_ix(pool_mgr_pt pool_mgr,
                                            size_t size, node_pt node);
-
 static alloc_status _mem_sort_gap_ix(pool_mgr_pt pool_mgr);
 static alloc_status _mem_invalidate_gap_ix(pool_mgr_pt pool_mgr);
 
@@ -102,44 +97,38 @@ static alloc_status _mem_invalidate_gap_ix(pool_mgr_pt pool_mgr);
 /****************************************/
 alloc_status mem_init() {
     // ensure that it's called only once until mem_free
-    assert();
+    assert(pool_store_capacity == 0);
 
     // allocate the pool store with initial capacity
     // note: holds pointers only, other functions to allocate/deallocate
-    *pool_store = malloc(MEM_POOL_STORE_INIT_CAPACITY);
+    *pool_store = calloc(MEM_POOL_STORE_INIT_CAPACITY, NULL);
     pool_store_capacity = MEM_POOL_STORE_INIT_CAPACITY;
-
-    call_flag = 0; // Using this to ensure its only called once - set to false
-    call_count += 1; // for count of mem_init calls
 
     return ALLOC_OK;
 }
 
 alloc_status mem_free() {
     // ensure that it's called only once for each mem_init
-    assert();
+    assert(pool_store_capacity > 0);
 
-    // make sure all pool managers have been deallocated
+    // make sure all pool managers have been deallocate
 
     // can free the pool store array
     free(*pool_store);
 
     // update static variables
 
-    call_flag = 1;  // since mem_free is called we can set this to true again
-    call_count -= 1; // decrement mem_init calls
-
     return ALLOC_FAIL;
 }
 
 pool_pt mem_pool_open(size_t size, alloc_policy policy) {
     // make sure there the pool store is allocated
-    assert();
+    assert(pool_store_capacity > 0);
 
     // expand the pool store, if necessary
     if(pool_store_size == pool_store_capacity)
     {
-
+        _mem_resize_pool_store();
     }
 
     // allocate a new mem pool mgr
@@ -151,55 +140,60 @@ pool_pt mem_pool_open(size_t size, alloc_policy policy) {
     }
 
     // allocate a new memory pool
-    pool_pt pool = (pool_pt) malloc(size);
+    pool_pt new_pool = (pool_pt) malloc(sizeof(pool_pt));
     // check success, on error deallocate mgr and return null
-    if(!(pool))
+    if(!(new_pool))
     {
-      // <- deallocate mgr here
+      mem_free();
       return NULL;
     }
 
-
     // allocate a new node heap
-    node_pt node = (node_pt) malloc(size);
+    node_pt node = (node_pt) malloc(sizeof(node_pt));
     // check success, on error deallocate mgr/pool and return null
     if(!(node))
     {
-      // <- deallocate mgr/ppol here
-      return NULL;
+        mem_free();
+        return NULL;
     }
-
     // allocate a new gap index
-    gap_pt gap = (gap_pt) malloc(size);
+    gap_pt gap = (gap_pt) malloc(sizeof(gap_pt));
     // check success, on error deallocate mgr/pool/heap and return null
     if(!(gap))
     {
-      // <- deallocate mgr/pool/heap here
+      mem_free();
       return NULL;
     }
 
     // assign all the pointers and update meta data:
     //   initialize top node of node heap
-
+        pool_mgr->node_heap = node;
     //   initialize top node of gap index
-
+        pool_mgr->gap_ix = gap;
     //   initialize pool mgr
-
+        pool_mgr->pool = *new_pool;
     //   link pool mgr to pool store
-
+        *pool_store = pool_mgr;
+        pool_store_size += 1;
     // return the address of the mgr, cast to (pool_pt)
-
-    return NULL;
+        return &pool_mgr->pool;
 }
 
 alloc_status mem_pool_close(pool_pt pool) {
     // get mgr from pool by casting the pointer to (pool_mgr_pt)
+
     // check if this pool is allocated
+
     // check if pool has only one gap
+
     // check if it has zero allocations
+
     // free memory pool
+
     // free node heap
+
     // free gap index
+
     // find mgr in pool store and set to null
     // note: don't decrement pool_store_size, because it only grows
     // free mgr
@@ -308,7 +302,8 @@ void mem_inspect_pool(pool_pt pool,
 /* Definitions of static functions */
 /*                                 */
 /***********************************/
-static alloc_status _mem_resize_pool_store() {
+static alloc_status _mem_resize_pool_store()
+{
     // check if necessary
     /*
                 if (((float) pool_store_size / pool_store_capacity)
@@ -319,13 +314,15 @@ static alloc_status _mem_resize_pool_store() {
     return ALLOC_FAIL;
 }
 
-static alloc_status _mem_resize_node_heap(pool_mgr_pt pool_mgr) {
+static alloc_status _mem_resize_node_heap(pool_mgr_pt pool_mgr)
+{
     // see above
 
     return ALLOC_FAIL;
 }
 
-static alloc_status _mem_resize_gap_ix(pool_mgr_pt pool_mgr) {
+static alloc_status _mem_resize_gap_ix(pool_mgr_pt pool_mgr)
+{
     // see above
 
     return ALLOC_FAIL;
@@ -333,7 +330,8 @@ static alloc_status _mem_resize_gap_ix(pool_mgr_pt pool_mgr) {
 
 static alloc_status _mem_add_to_gap_ix(pool_mgr_pt pool_mgr,
                                        size_t size,
-                                       node_pt node) {
+                                       node_pt node)
+{
 
     // expand the gap index, if necessary (call the function)
     // add the entry at the end
@@ -346,7 +344,8 @@ static alloc_status _mem_add_to_gap_ix(pool_mgr_pt pool_mgr,
 
 static alloc_status _mem_remove_from_gap_ix(pool_mgr_pt pool_mgr,
                                             size_t size,
-                                            node_pt node) {
+                                            node_pt node)
+{
     // find the position of the node in the gap index
     // loop from there to the end of the array:
     //    pull the entries (i.e. copy over) one position up
@@ -358,7 +357,8 @@ static alloc_status _mem_remove_from_gap_ix(pool_mgr_pt pool_mgr,
 }
 
 // note: only called by _mem_add_to_gap_ix, which appends a single entry
-static alloc_status _mem_sort_gap_ix(pool_mgr_pt pool_mgr) {
+static alloc_status _mem_sort_gap_ix(pool_mgr_pt pool_mgr)
+{
     // the new entry is at the end, so "bubble it up"
     // loop from num_gaps - 1 until but not including 0:
     //    if the size of the current entry is less than the previous (u - 1)
@@ -369,6 +369,7 @@ static alloc_status _mem_sort_gap_ix(pool_mgr_pt pool_mgr) {
     return ALLOC_FAIL;
 }
 
-static alloc_status _mem_invalidate_gap_ix(pool_mgr_pt pool_mgr) {
+static alloc_status _mem_invalidate_gap_ix(pool_mgr_pt pool_mgr)
+{
     return ALLOC_FAIL;
 }
