@@ -135,7 +135,6 @@ pool_pt mem_pool_open(size_t size, alloc_policy policy) {
     // make sure there the pool store is allocated
     assert(pool_store_capacity > 0);
 
-
     // expand the pool store, if necessary
     if(pool_store_size == pool_store_capacity)
     {
@@ -143,52 +142,59 @@ pool_pt mem_pool_open(size_t size, alloc_policy policy) {
     }
 
     // allocate a new mem pool mgr
-    /*pool_mgr_pt new_mgr = (pool_mgr_pt) malloc(size);
+    pool_mgr_pt new_mgr = (pool_mgr_pt) malloc(sizeof(pool_mgr_t));
     // check success, on error return null
-    if(!(pool_mgr))
+    if(new_mgr == NULL)
     {
       return NULL;
     }
 
     // allocate a new memory pool
-    pool_pt new_pool = (pool_pt) malloc(sizeof(pool_pt));
+    new_mgr->pool.mem = (char*) malloc(size);
     // check success, on error deallocate mgr and return null
-    if(!(new_pool))
+    if(new_mgr->pool.mem == NULL)
     {
-      mem_free();
+      free(new_mgr);
       return NULL;
     }
 
     // allocate a new node heap
-    node_pt node = (node_pt) malloc(sizeof(node_pt));
+    node_pt new_node = (node_pt) malloc(sizeof(node_t));
     // check success, on error deallocate mgr/pool and return null
-    if(!(node))
+    if(new_node == NULL)
     {
-        mem_free();
+        free(new_mgr);
+        free(new_mgr->pool.mem);
         return NULL;
     }
     // allocate a new gap index
-    gap_pt gap = (gap_pt) malloc(sizeof(gap_pt));
+    gap_pt new_gap = (gap_pt) malloc(sizeof(gap_t));
     // check success, on error deallocate mgr/pool/heap and return null
-    if(!(gap))
+    if(new_gap == NULL)
     {
-      mem_free();
+        free(new_mgr);
+        free(new_mgr->pool.mem);
+        free(new_gap);
       return NULL;
     }
 
     // assign all the pointers and update meta data:
     //   initialize top node of node heap
-        pool_mgr->node_heap = node;
+    new_mgr->node_heap = new_node;
     //   initialize top node of gap index
-        pool_mgr->gap_ix = gap;
+    new_mgr->gap_ix = new_gap;
     //   initialize pool mgr
-        pool_mgr->pool = *new_pool;
+    new_mgr->pool.policy = policy;
+    new_mgr->pool.total_size = size;
+    new_mgr->pool.alloc_size = 0;
+    new_mgr->pool.num_allocs = 0;
+    new_mgr->pool.num_gaps = 1;
     //   link pool mgr to pool store
-        *pool_store = pool_mgr;
-        pool_store_size += 1;
+    pool_store[0] = new_mgr;
+    pool_store_size += 1;
+
     // return the address of the mgr, cast to (pool_pt)
-        return &pool_mgr->pool;*/
-    return NULL;
+    return &(new_mgr->pool);
 }
 
 alloc_status mem_pool_close(pool_pt pool) {
