@@ -179,11 +179,12 @@ pool_pt mem_pool_open(size_t size, alloc_policy policy) {
     }
 
     // assign all the pointers and update meta data:
+
     //   initialize top node of node heap
     new_pool_mgr->node_heap[0].used = 1;
     new_pool_mgr->node_heap[0].allocated = 0;
     //   initialize top node of gap index
-    //mem_add_to_gap_ix(new_pool_mgr, size, new_pool_mgr->node_heap);
+    mem_add_to_gap_ix(new_pool_mgr, size, new_pool_mgr->node_heap);
 
     //   initialize pool mgr
     new_pool_mgr->pool.policy = policy;
@@ -240,15 +241,28 @@ void * mem_new_alloc(pool_pt pool, size_t size) {
     // get mgr from pool by casting the pointer to (pool_mgr_pt)
 
     // check if any gaps, return null if none
-
+    if(pool->num_gaps == 0)
+    {
+        return NULL;
+    }
     // expand heap node, if necessary, quit on error
-
     // check used nodes fewer than total nodes, quit on error
+    if(((pool_mgr_pt)pool)->used_nodes < ((pool_mgr_pt)pool)->total_nodes)
+    {
+        return NULL;
+    }
 
     // get a node for allocation:
     // if FIRST_FIT, then find the first sufficient node in the node heap
+    if(pool->policy == 0)
+    {
 
+    }
     // if BEST_FIT, then find the first sufficient node in the gap index
+    if(pool->policy == 1)
+    {
+
+    }
 
     // check if node found
 
@@ -380,12 +394,30 @@ static alloc_status _mem_add_to_gap_ix(pool_mgr_pt pool_mgr,
 {
 
     // expand the gap index, if necessary (call the function)
+    alloc_status result = _mem_resize_gap_ix(pool_mgr);
+    assert(result == ALLOC_OK);
+    if (result != ALLOC_OK)
+    {
+        return ALLOC_FAIL;
+    }
     // add the entry at the end
+    pool_mgr->gap_ix[pool_mgr->pool.num_gaps].size = size;
+    pool_mgr->gap_ix[pool_mgr->pool.num_gaps].node = node;
+
     // update metadata (num_gaps)
+    pool_mgr->pool.num_gaps++;
+
     // sort the gap index (call the function)
+    result = _mem_sort_gap_ix(pool_mgr);
+    assert(result == ALLOC_OK);
+    if (result != ALLOC_OK)
+    {
+        return ALLOC_FAIL;
+    }
+
     // check success
 
-    return ALLOC_FAIL;
+    return result;
 }
 
 static alloc_status _mem_remove_from_gap_ix(pool_mgr_pt pool_mgr,
