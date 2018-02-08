@@ -186,6 +186,7 @@ pool_pt mem_pool_open(size_t size, alloc_policy policy) {
 
     //   initialize top node of node heap
     new_pool_mgr->total_nodes = MEM_NODE_HEAP_INIT_CAPACITY;
+    new_pool_mgr->used_nodes = 1;
     new_pool_mgr->node_heap[0].used = 1;
     new_pool_mgr->node_heap[0].allocated = 0;
     //   initialize top node of gap index
@@ -252,11 +253,10 @@ void * mem_new_alloc(pool_pt pool, size_t size) {
         return NULL;
     }
     // expand heap node, if necessary, quit on error
-
     // check used nodes fewer than total nodes, quit on error
     if(((pool_mgr_pt)pool)->used_nodes < ((pool_mgr_pt)pool)->total_nodes)
     {
-        return NULL;
+        _mem_resize_node_heap(((pool_mgr_pt)pool));
     }
 
     // get a node for allocation:
@@ -472,10 +472,21 @@ static alloc_status _mem_remove_from_gap_ix(pool_mgr_pt pool_mgr,
     // loop from there to the end of the array:
     //    pull the entries (i.e. copy over) one position up
     //    this effectively deletes the chosen node
-    // update metadata (num_gaps)
-    // zero out the element at position num_gaps!
+    for(int i = 0; i < pool_mgr->total_nodes; i++) {
 
-    return ALLOC_FAIL;
+        if (pool_mgr->gap_ix[i].node == node) {
+
+            for(; i < pool_mgr->total_nodes; i++) {
+                pool_mgr->gap_ix[i] = pool_mgr->gap_ix[i++];
+            }
+        }
+    }
+    // update metadata (num_gaps)
+    pool_mgr->pool.num_gaps -= 1;
+    // zero out the element at position num_gaps!
+    pool_mgr->gap_ix[pool_mgr->pool.num_gaps].node = NULL;
+
+    return ALLOC_OK;
 }
 
 // note: only called by _mem_add_to_gap_ix, which appends a single entry
