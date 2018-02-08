@@ -104,7 +104,7 @@ alloc_status mem_init() {
 
     // allocate the pool store with initial capacity
     // note: holds pointers only, other functions to allocate/deallocate
-    pool_store = (pool_mgr_pt*) calloc(MEM_POOL_STORE_INIT_CAPACITY, sizeof(pool_mgr_pt));
+    pool_store = (pool_mgr_pt*) calloc(MEM_POOL_STORE_INIT_CAPACITY, sizeof(pool_mgr_t));
     pool_store_capacity = MEM_POOL_STORE_INIT_CAPACITY;
 
     return ALLOC_OK;
@@ -112,30 +112,38 @@ alloc_status mem_init() {
 
 alloc_status mem_free() {
     // ensure that it's called only once for each mem_init
-    //assert(pool_store_capacity > 0);
+    if(pool_store_capacity == 0)
+    {
+        return ALLOC_CALLED_AGAIN;
+    }
 
-    // make sure all pool managers have been deallocate
+    // make sure all pool managers have been deallocated
+
 
     // can free the pool store array
-    //free(*pool_store);
+    free(*pool_store);
 
     // update static variables
+    pool_mgr_pt *pool_store = NULL; // an array of pointers, only expand
+    pool_store_size = 0;
+    pool_store_capacity = 0;
 
-    return ALLOC_FAIL;
+    return ALLOC_OK;
 }
 
 pool_pt mem_pool_open(size_t size, alloc_policy policy) {
     // make sure there the pool store is allocated
-    //assert(pool_store_capacity > 0);
+    assert(pool_store_capacity > 0);
+
 
     // expand the pool store, if necessary
-    /*if(pool_store_size == pool_store_capacity)
+    if(pool_store_size == pool_store_capacity)
     {
         _mem_resize_pool_store();
     }
 
     // allocate a new mem pool mgr
-    pool_mgr_pt pool_mgr = (pool_mgr_pt) malloc(size);
+    /*pool_mgr_pt new_mgr = (pool_mgr_pt) malloc(size);
     // check success, on error return null
     if(!(pool_mgr))
     {
