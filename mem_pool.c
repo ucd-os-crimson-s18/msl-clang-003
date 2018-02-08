@@ -96,18 +96,18 @@ static alloc_status _mem_invalidate_gap_ix(pool_mgr_pt pool_mgr);
 /*                                      */
 /****************************************/
 alloc_status mem_init() {
-    // ensure that it's called only once until mem_free
-    if(pool_store_capacity > 0)
+  // ensure that it's called only once until mem_free
+  if(pool_store_capacity > 0)
     {
-        return ALLOC_CALLED_AGAIN;
+      return ALLOC_CALLED_AGAIN;
     }
 
-    // allocate the pool store with initial capacity
-    // note: holds pointers only, other functions to allocate/deallocate
-    pool_store = (pool_mgr_pt*) calloc(MEM_POOL_STORE_INIT_CAPACITY, sizeof(pool_mgr_t));
-    pool_store_capacity = MEM_POOL_STORE_INIT_CAPACITY;
+  // allocate the pool store with initial capacity
+  // note: holds pointers only, other functions to allocate/deallocate
+  pool_store = (pool_mgr_pt*) calloc(MEM_POOL_STORE_INIT_CAPACITY, sizeof(pool_mgr_t));
+  pool_store_capacity = MEM_POOL_STORE_INIT_CAPACITY;
 
-    return ALLOC_OK;
+  return ALLOC_OK;
 }
 
 alloc_status mem_free() {

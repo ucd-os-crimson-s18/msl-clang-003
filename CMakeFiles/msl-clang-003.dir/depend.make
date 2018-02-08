@@ -7,7 +7,6 @@ CMakeFiles/msl-clang-003.dir/main.c.o: test_suite.h
 CMakeFiles/msl-clang-003.dir/mem_pool.c.o: mem_pool.c
 CMakeFiles/msl-clang-003.dir/mem_pool.c.o: mem_pool.h
 
-CMakeFiles/msl-clang-003.dir/test_suite.c.o: cmocka.h
 CMakeFiles/msl-clang-003.dir/test_suite.c.o: mem_pool.h
 CMakeFiles/msl-clang-003.dir/test_suite.c.o: test_suite.c
 CMakeFiles/msl-clang-003.dir/test_suite.c.o: test_suite.h
