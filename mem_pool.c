@@ -183,7 +183,7 @@ pool_pt mem_pool_open(size_t size, alloc_policy policy) {
     new_pool_mgr->node_heap[0].used = 1;
     new_pool_mgr->node_heap[0].allocated = 0;
     //   initialize top node of gap index
-    mem_add_to_gap_ix(new_pool_mgr, size, new_pool_mgr->node_heap);
+    //mem_add_to_gap_ix(new_pool_mgr, size, new_pool_mgr->node_heap);
 
     //   initialize pool mgr
     new_pool_mgr->pool.policy = policy;
@@ -225,7 +225,7 @@ alloc_status mem_pool_close(pool_pt pool) {
 
         if (pool_store[i] == ((pool_mgr_pt) pool)) {
 
-            pool[i] = NULL;
+            pool_store[i] = NULL;
         }
     }
     // note: don't decrement pool_store_size, because it only grows
