@@ -325,7 +325,7 @@ void * mem_new_alloc(pool_pt pool, size_t size) {
     //   find an unused one in the node heap
     if(rem_gap_size != 0 )
     {
-        for (int i = 0; i < pool_mgr->total_nodes; i++)
+        for (int i = 0; i < pool_mgr->used_nodes; i++)
         {
             //   make sure one was found
             if (pool_mgr->node_heap[i].used == 0)
@@ -529,7 +529,7 @@ static alloc_status _mem_resize_gap_ix(pool_mgr_pt pool_mgr)
 {
     // see above
 
-    if((pool_mgr->gap_ix_capacity / (float)pool_mgr->gap_ix->size ) > MEM_GAP_IX_FILL_FACTOR)
+    if(((float)pool_mgr->used_nodes / pool_mgr->total_nodes) > MEM_GAP_IX_FILL_FACTOR)
     {
         unsigned new_size = MEM_GAP_IX_INIT_CAPACITY * MEM_GAP_IX_EXPAND_FACTOR;
 
