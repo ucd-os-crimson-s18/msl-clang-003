@@ -206,24 +206,32 @@ alloc_status mem_pool_close(pool_pt pool) {
     // check if this pool is allocated
     // check if pool has only one gap
     // check if it has zero allocations
-    if(pool->mem != NULL && pool->num_gaps != 1 && pool->num_allocs != 0)
+    if(pool->mem == NULL && pool->num_gaps == 1 && pool->num_allocs == 0)
     {
+        return ALLOC_FAIL;
+    }
         // free memory pool
         free(pool->mem);
 
-        pool_mgr_pt pool_mgr = (pool_mgr_pt)pool;
         // free node heap
-        free(pool_mgr->node_heap);
+        free(((pool_mgr_pt)pool)->node_heap);
 
         // free gap index
-        free(pool_mgr->gap_ix);
-    }
+        free(((pool_mgr_pt)pool)->gap_ix);
+
 
     // find mgr in pool store and set to null
+    for(int i = 0; i < pool_store_capacity; i++) {
 
+        if (pool_store[i] == ((pool_mgr_pt) pool)) {
+
+            pool[i] = NULL;
+        }
+    }
     // note: don't decrement pool_store_size, because it only grows
 
     // free mgr
+    free((pool_mgr_pt)pool);
 
     return ALLOC_OK;
 }
