@@ -201,6 +201,7 @@ pool_pt mem_pool_open(size_t size, alloc_policy policy) {
     new_pool_mgr->pool.num_gaps = 1;
 
 
+
     //   link pool mgr to pool store
     pool_store[pool_store_size++] = new_pool_mgr;
 
@@ -494,12 +495,37 @@ static alloc_status _mem_sort_gap_ix(pool_mgr_pt pool_mgr)
 {
     // the new entry is at the end, so "bubble it up"
     // loop from num_gaps - 1 until but not including 0:
+
+    node_pt temp;
+
+    int i = pool_mgr->pool.num_gaps;
+    for(; i > 0; i--)
+    {
+        if(pool_mgr->gap_ix[i].size < pool_mgr->gap_ix[i--].size)
+        {
+            temp = pool_mgr->gap_ix[i].node;
+
+            pool_mgr->gap_ix[i].node = pool_mgr->gap_ix[i--].node;
+
+            pool_mgr->gap_ix[i--].node = temp;
+        }
+        if(pool_mgr->gap_ix[i].size == pool_mgr->gap_ix[i--].size
+                && &(pool_mgr->gap_ix[i].node->alloc_record.mem) <
+                   &(pool_mgr->gap_ix[i--].node->alloc_record.mem))
+        {
+            temp = pool_mgr->gap_ix[i].node;
+
+            pool_mgr->gap_ix[i].node = pool_mgr->gap_ix[i--].node;
+
+            pool_mgr->gap_ix[i--].node = temp;
+        }
+    }
     //    if the size of the current entry is less than the previous (u - 1)
     //    or if the sizes are the same but the current entry points to a
     //    node with a lower address of pool allocation address (mem)
     //       swap them (by copying) (remember to use a temporary variable)
 
-    return ALLOC_FAIL;
+    return ALLOC_OK;
 }
 
 static alloc_status _mem_invalidate_gap_ix(pool_mgr_pt pool_mgr)
