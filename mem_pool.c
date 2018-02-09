@@ -294,18 +294,12 @@ void * mem_new_alloc(pool_pt pool, size_t size) {
     {
         int i = 0;
         // check if node found
-        while(alloc_node->allocated != 0 && alloc_node->alloc_record.size < size)
+        while(pool_mgr->gap_ix[i].node->alloc_record.size < size)
         {
-            // Set to next node
-            alloc_node = pool_mgr->gap_ix[i].node->next;
-            // if NULL exit
-            if(alloc_node == NULL)
-            {
-                return NULL;
-            }
-
             i++;
         }
+
+        alloc_node = pool_mgr->gap_ix[i].node;
     }
     // update metadata (num_allocs, alloc_size)
     pool->num_allocs += 1;
@@ -481,9 +475,9 @@ void mem_inspect_pool(pool_pt pool, pool_segment_pt *segments, unsigned *num_seg
 
     // allocate the segments array with size == used_nodes
     // NEED TO FREE LATER
-    pool_segment_pt segment_array = (pool_segment_pt) calloc(pool_mgr->used_nodes, sizeof(pool_segment_t));
+    pool_segment_pt seg_array = (pool_segment_pt) calloc(pool_mgr->used_nodes, sizeof(pool_segment_t));
     // check successful
-    if(segment_array == NULL)
+    if(seg_array == NULL)
     {
         return;
     }
@@ -492,12 +486,14 @@ void mem_inspect_pool(pool_pt pool, pool_segment_pt *segments, unsigned *num_seg
     for(int i = 0; i < pool_mgr->used_nodes; i++)
     {
         //    for each node, write the size and allocated in the segment
-        segment_array[i].size = pool_mgr->node_heap[i].alloc_record.size;
-        segment_array[i].allocated = pool_mgr->node_heap[i].allocated;
+        seg_array[i].size = pool_mgr->node_heap->alloc_record.size;
+        seg_array[i].allocated = pool_mgr->node_heap->allocated;
+
+        pool_mgr->node_heap->next;
     }
 
     // "return" the values:
-    *segments = segment_array;
+    *segments = seg_array;
     *num_segments = pool_mgr->used_nodes;
 }
 
