@@ -427,7 +427,12 @@ alloc_status mem_del_alloc(pool_pt pool, void * alloc) {
     {
         //   remove the previous node from gap index
         //   check success
-        _mem_remove_from_gap_ix(pool_mgr, node->prev->alloc_record.size, node->prev);
+        alloc_status result =
+                _mem_remove_from_gap_ix(pool_mgr, node->prev->alloc_record.size, node->prev);
+        if(result != ALLOC_OK)
+        {
+            return ALLOC_NOT_FREED;
+        }
         //   add the size of node-to-delete to the previous
         node->prev->alloc_record.size += node->alloc_record.size;
         //   update node-to-delete as unused
@@ -449,13 +454,14 @@ alloc_status mem_del_alloc(pool_pt pool, void * alloc) {
             //prev->next = NULL;
             node->prev->next = NULL;
         }
+        node_pt temp = node->prev;
         //node_to_del->next = NULL;
         node->next = NULL;
         //node_to_del->prev = NULL;
         node->prev = NULL;
 
         // change the node to add to the previous node!
-        node = pool_mgr->node_heap->prev;
+        node = temp;
     }
 
     // add the resulting node to the gap index
