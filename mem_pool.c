@@ -354,7 +354,7 @@ void * mem_new_alloc(pool_pt pool, size_t size) {
     }
 
     //   update metadata (used_nodes)
-    //pool_mgr->used_nodes += 1;
+    pool_mgr->used_nodes += 1;
 
     // return allocation record by casting the node to (alloc_pt)
     return (alloc_pt)alloc_node;
@@ -401,22 +401,24 @@ alloc_status mem_del_alloc(pool_pt pool, void * alloc) {
         // pool_mgr->used_nodes -= 1;
 
         //   update linked list:
-
+        node_pt temp = node->next;
         //if (next->next) {
-        if(node->next->next)
+        if(temp->next)
         {
             //next->next->prev = node_to_del;
-            node->next->next->prev = node;
+            temp->next->prev = node;
+            //node_to_del->next = next->next;
+            node->next = temp->next;
         }
-
-        node_pt temp = node->next;
-        //node_to_del->next = next->next;
-        node->next = node->next->next;
+        else
+        {
+            node->next = NULL;
+        }
         //next->next = NULL;
         temp->next = NULL;
         //next->prev = NULL;
         temp->prev = NULL;
-
+        
         // this merged node-to-delete might need to be added to the gap index
         // but one more thing to check...
     }
@@ -445,7 +447,6 @@ alloc_status mem_del_alloc(pool_pt pool, void * alloc) {
             node->prev->next = node->next;
             //node_to_del->next->prev = prev;
             node->next->prev = node->prev;
-
         }
         else
         {
@@ -469,6 +470,9 @@ alloc_status mem_del_alloc(pool_pt pool, void * alloc) {
     {
         return ALLOC_FAIL;
     }
+
+    //   update metadata (used_nodes)
+    pool_mgr->used_nodes -= 1;
 
     return ALLOC_OK;
 }
