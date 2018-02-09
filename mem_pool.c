@@ -393,7 +393,7 @@ alloc_status mem_del_alloc(pool_pt pool, void * alloc) {
 
     // update metadata (num_allocs, alloc_size)
     pool->num_allocs -= 1;
-    pool->alloc_size -= pool_mgr->node_heap->alloc_record.size;
+    pool->alloc_size -= node->alloc_record.size;
 
     // if the next node in the list is also a gap, merge into node-to-delete
     if(node->next != NULL && node->next->allocated == 0)
@@ -416,6 +416,7 @@ alloc_status mem_del_alloc(pool_pt pool, void * alloc) {
             //next->next->prev = node_to_del;
             node->next->next->prev = node;
         }
+
         node_pt temp = node->next;
         //node_to_del->next = next->next;
         node->next = node->next->next;
@@ -423,8 +424,6 @@ alloc_status mem_del_alloc(pool_pt pool, void * alloc) {
         temp->next = NULL;
         //next->prev = NULL;
         temp->prev = NULL;
-        // Set record size
-        temp->alloc_record.size = 0;
 
         // this merged node-to-delete might need to be added to the gap index
         // but one more thing to check...
