@@ -340,8 +340,12 @@ void * mem_new_alloc(pool_pt pool, size_t size) {
         new_node->alloc_record.size = rem_gap_size;
         new_node->alloc_record.mem = alloc_node->alloc_record.mem + size;
 
-        //   update linked list (new node right after the node for allocation)
-        alloc_node->next = new_node;
+
+	//   update linked list (new node right after the node for allocation)
+	if(alloc_node->next){
+	  new_node->next = alloc_node->next;
+	}
+	alloc_node->next = new_node;
         new_node->prev = alloc_node;
 
         //   add to gap index
