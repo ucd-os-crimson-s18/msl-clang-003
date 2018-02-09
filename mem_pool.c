@@ -310,9 +310,11 @@ void * mem_new_alloc(pool_pt pool, size_t size) {
     _mem_remove_from_gap_ix(pool_mgr, alloc_node->alloc_record.size , alloc_node);
 
     // convert gap_node to an allocation node of given size
-    alloc_node->allocated = 1;
-    alloc_node->alloc_record.size = size;
-
+    pool_mgr->node_heap->allocated = 1;
+    pool_mgr->node_heap->alloc_record.size = size;
+    pool_mgr->node_heap->next = (node_pt)pool_mgr->node_heap->alloc_record.mem+(size/sizeof(node_t));
+    pool_mgr->node_heap->next->prev =  pool_mgr->node_heap;
+      
     // adjust node heap:
     //   if remaining gap, need a new node
     if(rem_gap_size)
