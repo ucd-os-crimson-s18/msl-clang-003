@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <stdio.h> // for perror()
+#include <string.h>
 
 #include "mem_pool.h"
 
@@ -473,6 +474,7 @@ void mem_inspect_pool(pool_pt pool, pool_segment_pt *segments, unsigned *num_seg
     pool_mgr_pt pool_mgr = (pool_mgr_pt)pool;
 
     // allocate the segments array with size == used_nodes
+    // NEED TO FREE LATER
     pool_segment_pt segment_array = (pool_segment_pt) calloc(pool_mgr->used_nodes, sizeof(pool_segment_t));
     // check successful
     if(segment_array == NULL)
@@ -505,10 +507,12 @@ static alloc_status _mem_resize_pool_store()
     // check if necessary
     if (((float)pool_store_size / pool_store_capacity) > MEM_POOL_STORE_FILL_FACTOR)
     {
+        // Get new size
         unsigned new_size = MEM_POOL_STORE_INIT_CAPACITY * MEM_POOL_STORE_EXPAND_FACTOR;
 
+        // Call to reallocate the memory
         pool_store = realloc(pool_store, new_size);
-
+        // CHeck if it fails
         if(pool_store == NULL)
         {
             return ALLOC_FAIL;
@@ -526,15 +530,45 @@ static alloc_status _mem_resize_node_heap(pool_mgr_pt pool_mgr)
     // see above
     if(((float)pool_mgr->used_nodes / pool_mgr->total_nodes) > MEM_NODE_HEAP_FILL_FACTOR)
     {
+        // Get new size
         unsigned new_size = MEM_NODE_HEAP_INIT_CAPACITY * MEM_NODE_HEAP_EXPAND_FACTOR;
-
-        pool_mgr->node_heap = realloc(pool_mgr->node_heap, new_size);
-
-        if(pool_mgr->node_heap == NULL)
+        // Allocate new node
+        node_pt new_node_heap = calloc(new_size, sizeof(node_t));
+        // Check success
+        if(new_node_heap == NULL)
+        {
+            return ALLOC_FAIL;
+        }
+        // Call to invalidate the gap_ix
+        alloc_status result = _mem_invalidate_gap_ix(pool_mgr);
+        // Check success
+        if(result != ALLOC_OK)
         {
             return ALLOC_FAIL;
         }
 
+        // Traverse node heap
+        while(pool_mgr->node_heap != NULL)
+        {
+            // Copy over the memory to new node heap
+            memcpy(new_node_heap, pool_mgr->node_heap, sizeof(pool_mgr->node_heap));
+
+            //If its a gap_ix
+            if(pool_mgr->node_heap->allocated == 0)
+            {
+                alloc_status result =
+                        _mem_add_to_gap_ix(pool_mgr, pool_mgr->node_heap->alloc_record.size, pool_mgr->node_heap);
+                // Check success
+                if(result != ALLOC_OK)
+                {
+                    return ALLOC_FAIL;
+                }
+            }
+
+            pool_mgr->node_heap->next;
+        }
+
+        pool_mgr->node_heap = new_node_heap;
         pool_mgr->total_nodes = new_size;
     }
 
@@ -569,7 +603,6 @@ static alloc_status _mem_add_to_gap_ix(pool_mgr_pt pool_mgr,
 
     // expand the gap index, if necessary (call the function)
     alloc_status result = _mem_resize_gap_ix(pool_mgr);
-    //assert(result == ALLOC_OK);
     if (result != ALLOC_OK)
     {
         return ALLOC_FAIL;
@@ -665,5 +698,13 @@ static alloc_status _mem_sort_gap_ix(pool_mgr_pt pool_mgr)
 
 static alloc_status _mem_invalidate_gap_ix(pool_mgr_pt pool_mgr)
 {
-    return ALLOC_FAIL;
+
+    for(int i = 0; i < pool_mgr->used_nodes; i++)
+    {
+        pool_mgr->gap_ix[i].size = 0;
+        pool_mgr->gap_ix[i].node = NULL;
+    }
+
+    return ALLOC_OK;
 }
+
