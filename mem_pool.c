@@ -482,6 +482,7 @@ void mem_inspect_pool(pool_pt pool, pool_segment_pt *segments, unsigned *num_seg
     // get the mgr from the pool
     pool_mgr_pt pool_mgr = (pool_mgr_pt)pool;
 
+    node_pt temp = pool_mgr->node_heap;
     // allocate the segments array with size == used_nodes
     // NEED TO FREE LATER
     pool_segment_pt seg_array = (pool_segment_pt) calloc(pool_mgr->used_nodes, sizeof(pool_segment_t));
@@ -495,10 +496,11 @@ void mem_inspect_pool(pool_pt pool, pool_segment_pt *segments, unsigned *num_seg
     for(int i = 0; i < pool_mgr->used_nodes; i++)
     {
         //    for each node, write the size and allocated in the segment
-        seg_array[i].size = pool_mgr->node_heap->alloc_record.size;
-        seg_array[i].allocated = pool_mgr->node_heap->allocated;
+        seg_array[i].size = temp->alloc_record.size;
+        seg_array[i].allocated = temp->allocated;
 
-        pool_mgr->node_heap->next;
+        temp = temp->next;
+
     }
 
     // "return" the values:
