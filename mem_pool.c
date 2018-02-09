@@ -209,7 +209,7 @@ pool_pt mem_pool_open(size_t size, alloc_policy policy) {
     pool_store[pool_store_size++] = new_pool_mgr;
 
     // return the address of the mgr, cast to (pool_pt)
-    return (pool_pt) new_pool_mgr;
+    return (pool_pt)new_pool_mgr;
 }
 
 alloc_status mem_pool_close(pool_pt pool) {
@@ -233,17 +233,17 @@ alloc_status mem_pool_close(pool_pt pool) {
 
 
     // find mgr in pool store and set to null
-    for(int i = 0; i < pool_store_capacity; i++) {
-
-        if (pool_store[i] == ((pool_mgr_pt) pool)) {
-
+    for(int i = 0; i < pool_store_capacity; i++)
+    {
+        if (pool_store[i] == (pool_mgr_pt)pool)
+        {
             pool_store[i] = NULL;
         }
     }
     // note: don't decrement pool_store_size, because it only grows
 
     // free mgr
-    free((pool_mgr_pt)pool);
+    free(pool);
 
     return ALLOC_OK;
 }
@@ -251,8 +251,6 @@ alloc_status mem_pool_close(pool_pt pool) {
 void * mem_new_alloc(pool_pt pool, size_t size) {
     // get mgr from pool by casting the pointer to (pool_mgr_pt)
     pool_mgr_pt pool_mgr = (pool_mgr_pt)pool;
-
-    //int x = 0;
 
     size_t rem_gap_size = 0;
 
@@ -306,7 +304,6 @@ void * mem_new_alloc(pool_pt pool, size_t size) {
     pool_mgr->node_heap->allocated = 1;
     pool_mgr->node_heap->alloc_record.size = size;
 
-
     // adjust node heap:
     //   if remaining gap, need a new node
     //   find an unused one in the node heap
@@ -333,7 +330,6 @@ void * mem_new_alloc(pool_pt pool, size_t size) {
         _mem_add_to_gap_ix(pool_mgr, rem_gap_size, new_node);
 
         //   check if successful
-
     }
 
     //   update metadata (used_nodes)
@@ -483,7 +479,6 @@ static alloc_status _mem_resize_pool_store()
 
         // don't forget to update capacity variables
         pool_store_capacity = new_size;
-
     }
 
     return ALLOC_OK;
@@ -570,14 +565,18 @@ static alloc_status _mem_remove_from_gap_ix(pool_mgr_pt pool_mgr,
     // loop from there to the end of the array:
     //    pull the entries (i.e. copy over) one position up
     //    this effectively deletes the chosen node
-    for(int i = 0; i < pool_mgr->used_nodes; i++) {
-
-        if (pool_mgr->gap_ix[i].node == node) {
-
-            for(; i < pool_mgr->used_nodes; i++) {
+    for(int i = 0; i < pool_mgr->used_nodes; i++)
+    {
+        if (pool_mgr->gap_ix[i].node == node)
+        {
+            for(; i < pool_mgr->used_nodes; i++)
+            {
                 pool_mgr->gap_ix[i] = pool_mgr->gap_ix[i++];
             }
+
+            break;
         }
+
     }
     // update metadata (num_gaps)
     pool_mgr->pool.num_gaps -= 1;
@@ -596,20 +595,26 @@ static alloc_status _mem_sort_gap_ix(pool_mgr_pt pool_mgr)
     node_pt temp;
 
     int i = pool_mgr->pool.num_gaps - 1;
+
     for(; i > 0; i--)
     {
+        // if the size of the current entry is less than the previous (u - 1)
         if(pool_mgr->gap_ix[i].size < pool_mgr->gap_ix[i--].size)
         {
+            // swap them (by copying) (remember to use a temporary variable)
             temp = pool_mgr->gap_ix[i].node;
 
             pool_mgr->gap_ix[i].node = pool_mgr->gap_ix[i--].node;
 
             pool_mgr->gap_ix[i--].node = temp;
         }
+        // or if the sizes are the same but the current entry points to a
+        // node with a lower address of pool allocation address (mem)
         if(pool_mgr->gap_ix[i].size == pool_mgr->gap_ix[i--].size
                 && &(pool_mgr->gap_ix[i].node->alloc_record.mem) <
                    &(pool_mgr->gap_ix[i--].node->alloc_record.mem))
         {
+            // swap them (by copying) (remember to use a temporary variable)
             temp = pool_mgr->gap_ix[i].node;
 
             pool_mgr->gap_ix[i].node = pool_mgr->gap_ix[i--].node;
@@ -617,11 +622,6 @@ static alloc_status _mem_sort_gap_ix(pool_mgr_pt pool_mgr)
             pool_mgr->gap_ix[i--].node = temp;
         }
     }
-    //    if the size of the current entry is less than the previous (u - 1)
-    //    or if the sizes are the same but the current entry points to a
-    //    node with a lower address of pool allocation address (mem)
-    //       swap them (by copying) (remember to use a temporary variable)
-
     return ALLOC_OK;
 }
 
