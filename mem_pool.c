@@ -344,6 +344,7 @@ void * mem_new_alloc(pool_pt pool, size_t size) {
 	//   update linked list (new node right after the node for allocation)
 	if(alloc_node->next){
 	  new_node->next = alloc_node->next;
+	  alloc_node->next->prev = new_node;
 	}
 	alloc_node->next = new_node;
         new_node->prev = alloc_node;
