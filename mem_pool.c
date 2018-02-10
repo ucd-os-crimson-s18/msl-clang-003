@@ -294,6 +294,10 @@ void * mem_new_alloc(pool_pt pool, size_t size) {
         // check if node found
         while(pool_mgr->gap_ix[i].node->alloc_record.size < size)
         {
+            if(pool_mgr->gap_ix[i + 1].node == NULL)
+            {
+                return NULL;
+            }
             i++;
         }
 
