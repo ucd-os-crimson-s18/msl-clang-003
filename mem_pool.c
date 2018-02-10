@@ -583,7 +583,7 @@ static alloc_status _mem_resize_node_heap(pool_mgr_pt pool_mgr)
                 }
             }
 
-            pool_mgr->node_heap->next;
+            pool_mgr->node_heap = pool_mgr->node_heap->next;
         }
 
         pool_mgr->node_heap = new_node_heap;
