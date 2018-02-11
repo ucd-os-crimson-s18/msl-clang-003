@@ -680,24 +680,24 @@ static alloc_status _mem_sort_gap_ix(pool_mgr_pt pool_mgr)
     for(; i > 0; i--)
     {
         // if the size of the current entry is less than the previous (u - 1)
-        if(pool_mgr->gap_ix[i].size < pool_mgr->gap_ix[i--].size)
+        if(pool_mgr->gap_ix[i].size < pool_mgr->gap_ix[i-1].size)
         {
             // swap them (by copying) (remember to use a temporary variable)
             temp = pool_mgr->gap_ix[i];
 
-            pool_mgr->gap_ix[i] = pool_mgr->gap_ix[i--];
+            pool_mgr->gap_ix[i] = pool_mgr->gap_ix[i-1];
 
             pool_mgr->gap_ix[i--] = temp;
         }
         // or if the sizes are the same but the current entry points to a
         // node with a lower address of pool allocation address (mem)
-        if(pool_mgr->gap_ix[i].size == pool_mgr->gap_ix[i--].size
-                && pool_mgr->gap_ix[i].node < pool_mgr->gap_ix[i--].node)
+        if(pool_mgr->gap_ix[i].size == pool_mgr->gap_ix[i-1].size
+                && pool_mgr->gap_ix[i].node < pool_mgr->gap_ix[i-1].node)
         {
             // swap them (by copying) (remember to use a temporary variable)
             temp = pool_mgr->gap_ix[i];
 
-            pool_mgr->gap_ix[i] = pool_mgr->gap_ix[i--];
+            pool_mgr->gap_ix[i] = pool_mgr->gap_ix[i-1];
 
             pool_mgr->gap_ix[i--] = temp;
         }
