@@ -216,7 +216,7 @@ alloc_status mem_pool_close(pool_pt pool) {
     // check if this pool is allocated
     // check if pool has only one gap
     // check if it has zero allocations
-    if(pool->mem != NULL && pool->num_gaps != 1 && pool->num_allocs != 0)
+    if(pool->mem != NULL && pool->num_gaps == 1 && pool->num_allocs != 0)
     {
         return ALLOC_NOT_FREED;
     }
