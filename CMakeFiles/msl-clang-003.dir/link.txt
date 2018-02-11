@@ -1,1 +1,1 @@
-/usr/bin/cc   -std=c11 -Werror   CMakeFiles/msl-clang-003.dir/main.c.o CMakeFiles/msl-clang-003.dir/mem_pool.c.o CMakeFiles/msl-clang-003.dir/test_suite.c.o  -o msl-clang-003 -rdynamic /usr/local/lib/libcmocka.so.0.4.1 -Wl,-rpath,/usr/local/lib 
+/usr/bin/cc   -std=c11 -Werror -g   CMakeFiles/msl-clang-003.dir/main.c.o CMakeFiles/msl-clang-003.dir/mem_pool.c.o CMakeFiles/msl-clang-003.dir/test_suite.c.o  -o msl-clang-003 -rdynamic /usr/local/lib/libcmocka.so.0.4.1 -Wl,-rpath,/usr/local/lib 

@@ -303,7 +303,9 @@ void * mem_new_alloc(pool_pt pool, size_t size) {
     // convert gap_node to an allocation node of given size
     pool_mgr->node_heap->allocated = 1;
     pool_mgr->node_heap->alloc_record.size = size;
-
+    pool_mgr->node_heap->next = (node_pt)pool_mgr->node_heap->alloc_record.mem+(size/sizeof(node_t);
+    pool_mgr->node_heap->next->prev =  pool_mgr->node_heap;
+      
     // adjust node heap:
     //   if remaining gap, need a new node
     //   find an unused one in the node heap
