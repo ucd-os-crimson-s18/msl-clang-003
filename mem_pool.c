@@ -191,8 +191,6 @@ pool_pt mem_pool_open(size_t size, alloc_policy policy) {
     new_pool_mgr->node_heap->alloc_record.size = size;
     new_pool_mgr->node_heap->used = 1;
     new_pool_mgr->node_heap->allocated = 0;
-    new_pool_mgr->node_heap->next = NULL;
-    new_pool_mgr->node_heap->prev = NULL;
     //   initialize top node of gap index
     new_pool_mgr->gap_ix_capacity =  MEM_GAP_IX_INIT_CAPACITY;
     new_pool_mgr->gap_ix->size = 1;
@@ -268,12 +266,18 @@ void * mem_new_alloc(pool_pt pool, size_t size) {
     }
 
     // get a node for allocation:
+    node_pt alloc_node = pool_mgr->node_heap;
     // if FIRST_FIT, then find the first sufficient node in the node heap
     if(pool->policy == 0)
     {
-        while(pool_mgr->node_heap->allocated != 0 && pool_mgr->node_heap->alloc_record.size < size)
+        while(alloc_node->allocated != 0 && alloc_node->alloc_record.size < size)
         {
-            pool_mgr->node_heap = pool_mgr->node_heap->next;
+            alloc_node = alloc_node->next;
+
+            if(alloc_node == NULL)
+            {
+                return NULL;
+            }
         }
     }
 
@@ -281,9 +285,14 @@ void * mem_new_alloc(pool_pt pool, size_t size) {
     if(pool->policy == 1)
     {
         // check if node found
-        while(pool_mgr->node_heap->allocated != 0 && pool_mgr->node_heap->alloc_record.size < size)
+        while(alloc_node->allocated != 0 && alloc_node->alloc_record.size < size)
         {
-            pool_mgr->node_heap = pool_mgr->gap_ix->node->next;
+            alloc_node = pool_mgr->gap_ix->node->next;
+
+            if(alloc_node == NULL)
+            {
+                return NULL;
+            }
         }
     }
     // update metadata (num_allocs, alloc_size)
@@ -292,13 +301,13 @@ void * mem_new_alloc(pool_pt pool, size_t size) {
 
     // calculate the size of the remaining gap, if any
 
-    if(pool_mgr->node_heap->alloc_record.size > size)
+    if(alloc_node->alloc_record.size > size)
     {
-        rem_gap_size = pool_mgr->node_heap->alloc_record.size - size;
+        rem_gap_size = alloc_node->alloc_record.size - size;
     }
 
     // remove node from gap index
-    _mem_remove_from_gap_ix(pool_mgr, size, pool_mgr->node_heap);
+    _mem_remove_from_gap_ix(pool_mgr, size, alloc_node);
 
     // convert gap_node to an allocation node of given size
     pool_mgr->node_heap->allocated = 1;
@@ -308,25 +317,25 @@ void * mem_new_alloc(pool_pt pool, size_t size) {
       
     // adjust node heap:
     //   if remaining gap, need a new node
-    //   find an unused one in the node heap
-    node_pt new_node = pool_mgr->node_heap;
-
-    if(rem_gap_size != 0 )
+    if(rem_gap_size)
     {
+        node_pt new_node = NULL;
         //   make sure one was found
-        while(new_node->used != 0)
+        int i = 0;
+        while(pool_mgr->node_heap[i].used != 0)
         {
-            new_node = pool_mgr->node_heap->next;
+            i++;
         }
+        new_node = &pool_mgr->node_heap[i];
         //   initialize it to a gap node
         new_node->allocated = 0;
         new_node->used = 1;
         new_node->alloc_record.size = rem_gap_size;
-        new_node->alloc_record.mem += size;
+        new_node->alloc_record.mem = NULL;
 
         //   update linked list (new node right after the node for allocation)
-        pool_mgr->node_heap->next = new_node;
-        new_node->prev = pool_mgr->node_heap;
+        alloc_node->next = new_node;
+        new_node->prev = alloc_node;
 
         //   add to gap index
         _mem_add_to_gap_ix(pool_mgr, rem_gap_size, new_node);
@@ -338,7 +347,7 @@ void * mem_new_alloc(pool_pt pool, size_t size) {
     pool_mgr->used_nodes += 1;
 
     // return allocation record by casting the node to (alloc_pt)
-    return (alloc_pt)pool_mgr->node_heap;
+    return (alloc_pt)alloc_node;
 }
 
 alloc_status mem_del_alloc(pool_pt pool, void * alloc) {
@@ -573,7 +582,8 @@ static alloc_status _mem_remove_from_gap_ix(pool_mgr_pt pool_mgr,
         {
             for(; i < pool_mgr->used_nodes; i++)
             {
-                pool_mgr->gap_ix[i] = pool_mgr->gap_ix[i++];
+                pool_mgr->gap_ix[i].size = pool_mgr->gap_ix[i++].size;
+                pool_mgr->gap_ix[i].node = pool_mgr->gap_ix[i++].node;
             }
 
             break;
@@ -583,6 +593,7 @@ static alloc_status _mem_remove_from_gap_ix(pool_mgr_pt pool_mgr,
     // update metadata (num_gaps)
     pool_mgr->pool.num_gaps -= 1;
     // zero out the element at position num_gaps!
+    pool_mgr->gap_ix[pool_mgr->pool.num_gaps].size = 0;
     pool_mgr->gap_ix[pool_mgr->pool.num_gaps].node = NULL;
 
     return ALLOC_OK;
