@@ -407,11 +407,17 @@ alloc_status mem_del_alloc(pool_pt pool, void * alloc) {
         {
             //next->next->prev = node_to_del;
             node->next->next->prev = node;
+
+            //node_to_del->next = next->next;
+	    node->next = node->next->next;
         }
+	else
+	  {
+	    node->next = NULL;
+	  }
 
         node_pt temp = node->next;
-        //node_to_del->next = next->next;
-        node->next = node->next->next;
+        
         //next->next = NULL;
         temp->next = NULL;
         //next->prev = NULL;
