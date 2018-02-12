@@ -2345,7 +2345,7 @@ void test_pool_stresstest0(void **state) {
 
     // allocate pools
     for (unsigned pix=0; pix < num_pools; ++pix) {
-        // open pool
+      // open pool
         pools[pix] =
                 mem_pool_open(pool_size, (pix % 2) ? FIRST_FIT : BEST_FIT);
         assert_non_null(pools[pix]);
