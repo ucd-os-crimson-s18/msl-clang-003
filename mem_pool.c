@@ -501,7 +501,11 @@ void mem_inspect_pool(pool_pt pool, pool_segment_pt *segments, unsigned *num_seg
         seg_array[i].size = pool_mgr->node_heap->alloc_record.size;
         seg_array[i].allocated = pool_mgr->node_heap->allocated;
 
-        pool_mgr->node_heap->next;
+	if(pool_mgr->node_heap->next)
+	  {
+	    pool_mgr->node_heap = pool_mgr->node_heap->next;
+	  }
+	
     }
 
     // "return" the values:
