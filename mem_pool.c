@@ -422,7 +422,7 @@ alloc_status mem_del_alloc(pool_pt pool, void * alloc) {
         temp->next = NULL;
         //next->prev = NULL;
         temp->prev = NULL;
-        
+
         // this merged node-to-delete might need to be added to the gap index
         // but one more thing to check...
     }
@@ -431,12 +431,8 @@ alloc_status mem_del_alloc(pool_pt pool, void * alloc) {
     {
         //   remove the previous node from gap index
         //   check success
-        alloc_status result =
-                _mem_remove_from_gap_ix(pool_mgr, node->prev->alloc_record.size, node->prev);
-        if(result != ALLOC_OK)
-        {
-            return ALLOC_NOT_FREED;
-        }
+        _mem_remove_from_gap_ix(pool_mgr, node->prev->alloc_record.size, node->prev);
+
         //   add the size of node-to-delete to the previous
         node->prev->alloc_record.size += node->alloc_record.size;
         //   update node-to-delete as unused
@@ -444,20 +440,21 @@ alloc_status mem_del_alloc(pool_pt pool, void * alloc) {
         //   update metadata (used nodes)
         //pool_mgr->used_nodes -= 1;
 
+        node_pt temp = node->prev;
         //if (node_to_del->next) {
         if(node->next)
         {
             //prev->next = node_to_del->next;
-            node->prev->next = node->next;
+            temp->next = node->next;
             //node_to_del->next->prev = prev;
-            node->next->prev = node->prev;
+            node->next->prev = temp;
         }
         else
         {
             //prev->next = NULL;
-            node->prev->next = NULL;
+            temp->next = NULL;
         }
-        node_pt temp = node->prev;
+
         //node_to_del->next = NULL;
         node->next = NULL;
         //node_to_del->prev = NULL;
@@ -485,6 +482,7 @@ void mem_inspect_pool(pool_pt pool, pool_segment_pt *segments, unsigned *num_seg
     // get the mgr from the pool
     pool_mgr_pt pool_mgr = (pool_mgr_pt)pool;
 
+    node_pt temp = pool_mgr->node_heap;
     // allocate the segments array with size == used_nodes
     // NEED TO FREE LATER
     pool_segment_pt seg_array = (pool_segment_pt) calloc(pool_mgr->used_nodes, sizeof(pool_segment_t));
@@ -498,14 +496,11 @@ void mem_inspect_pool(pool_pt pool, pool_segment_pt *segments, unsigned *num_seg
     for(int i = 0; i < pool_mgr->used_nodes; i++)
     {
         //    for each node, write the size and allocated in the segment
-        seg_array[i].size = pool_mgr->node_heap->alloc_record.size;
-        seg_array[i].allocated = pool_mgr->node_heap->allocated;
+        seg_array[i].size = temp->alloc_record.size;
+        seg_array[i].allocated = temp->allocated;
 
-	if(pool_mgr->node_heap->next)
-	  {
-	    pool_mgr->node_heap = pool_mgr->node_heap->next;
-	  }
-	
+        temp = temp->next;
+
     }
 
     // "return" the values:
