@@ -187,7 +187,7 @@ pool_pt mem_pool_open(size_t size, alloc_policy policy) {
 
     //   initialize top node of node heap
     new_pool_mgr->total_nodes = MEM_NODE_HEAP_INIT_CAPACITY;
-    new_pool_mgr->used_nodes = 1;
+    //  new_pool_mgr->used_nodes = 1;
     new_pool_mgr->node_heap->alloc_record.mem = new_pool_mgr->pool.mem;
     new_pool_mgr->node_heap->alloc_record.size = size;
     new_pool_mgr->node_heap->used = 1;
@@ -354,7 +354,7 @@ void * mem_new_alloc(pool_pt pool, size_t size) {
     }
 
     //   update metadata (used_nodes)
-    pool_mgr->used_nodes += 1;
+    //pool_mgr->used_nodes += 1;
 
     // return allocation record by casting the node to (alloc_pt)
     return (alloc_pt)alloc_node;
@@ -398,7 +398,7 @@ alloc_status mem_del_alloc(pool_pt pool, void * alloc) {
         //   update node as unused
         node->next->used = 0;
         //   update metadata (used nodes)
-        pool_mgr->used_nodes -= 1;
+        // pool_mgr->used_nodes -= 1;
 
         //   update linked list:
 
@@ -436,7 +436,7 @@ alloc_status mem_del_alloc(pool_pt pool, void * alloc) {
         //   update node-to-delete as unused
         node->used = 0;
         //   update metadata (used nodes)
-        pool_mgr->used_nodes -= 1;
+        //pool_mgr->used_nodes -= 1;
 
         //if (node_to_del->next) {
         if(node->next)
@@ -619,6 +619,7 @@ static alloc_status _mem_add_to_gap_ix(pool_mgr_pt pool_mgr,
 
     // update metadata (num_gaps)
     pool_mgr->pool.num_gaps += 1;
+    pool_mgr->used_nodes += 1;
 
     // sort the gap index (call the function)
     result = _mem_sort_gap_ix(pool_mgr);
@@ -661,6 +662,7 @@ static alloc_status _mem_remove_from_gap_ix(pool_mgr_pt pool_mgr,
 
     // update metadata (num_gaps)
     pool_mgr->pool.num_gaps -= 1;
+    pool_mgr->used_nodes -= 1;
 
     // zero out the element at position num_gaps!
     pool_mgr->gap_ix[pool_mgr->pool.num_gaps].size = 0;
