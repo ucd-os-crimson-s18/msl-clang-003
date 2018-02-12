@@ -275,7 +275,7 @@ void * mem_new_alloc(pool_pt pool, size_t size) {
     if(pool->policy == 0)
     {
         // While we haven't found the node we need
-        while(alloc_node->allocated != 0 && alloc_node->alloc_record.size < size)
+        while(alloc_node->allocated != 0 || alloc_node->alloc_record.size < size)
         {
             // Set to next node
             alloc_node = alloc_node->next;
@@ -344,6 +344,7 @@ void * mem_new_alloc(pool_pt pool, size_t size) {
 	//   update linked list (new node right after the node for allocation)
 	if(alloc_node->next){
 	  new_node->next = alloc_node->next;
+	  alloc_node->next->prev = new_node;
 	}
 	alloc_node->next = new_node;
         new_node->prev = alloc_node;
